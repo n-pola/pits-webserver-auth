@@ -17,7 +17,7 @@ router.post('/register', async (req, res) => {
       userName: req.body.userName,
       password: await hash,
       currentOtp: otpList[otpList.length - 1],
-      otpCount: otpList.length - 1
+      otpCount: otpList.length - 1,
     });
     await newUser.save((err) => {
       if (err) {
@@ -34,7 +34,7 @@ router.post('/register', async (req, res) => {
     const response = {
       name: newUser.userName,
       token,
-      otpList
+      otpList,
     };
 
     res.send(response);
@@ -44,25 +44,18 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-  const loginUser = {
-    userName: req.body.username,
-    password: req.body.password
-  };
-
-  await User.findOne({ userName: req.body.userName }, (err, User) => {
-    if (err || !User || !bcrypt.compareSync(req.body.password, User.password)) {
+  await User.findOne({ userName: req.body.userName }, (err, loginUser) => {
+    if (err || !User || !bcrypt.compareSync(req.body.password, loginUser.password)) {
       res.status(403);
       res.json('You shouldnt be here.');
     } else {
-      jwt.sign(
-        { loginUser },
-        process.env.JWT_SECRET_KEY,
-        { expiresIn: '180s' },
-        async (err, token) => {
-          res.status(200);
-          res.json(`Welcome  ${User.userName} with the key ${token}`);
-        }
-      );
+      const token = loginUser.generateAuthToken();
+      const response = {
+        name: loginUser.userName,
+        token,
+      };
+
+      res.send(response);
     }
   });
 });
@@ -79,7 +72,7 @@ router.get('/seminare', getToken, async (req, res) => {
       } else {
         res.json(authData);
       }
-    }
+    },
   );
 });
 
@@ -94,7 +87,7 @@ router.post('/seminare/:id', getToken, async (req, res) => {
       } else {
         res.json(authData);
       }
-    }
+    },
   );
 });
 
@@ -109,7 +102,7 @@ router.post('/settings/otp', getToken, async (req, res) => {
       } else {
         res.json(authData);
       }
-    }
+    },
   );
 });
 
