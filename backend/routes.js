@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { ObjectId } = require('mongoose').Types;
 const getToken = require('./middlewares/getToken');
 const User = require('./models/userModel');
 const seminar = require('./models/seminar');
@@ -19,7 +20,8 @@ router.post('/register', async (req, res) => {
       userName: req.body.userName,
       password: await hash,
       currentOtp: otpList[otpList.length - 1],
-      otpCount: otpList.length - 1
+      otpCount: otpList.length,
+      seminars: []
     });
     await newUser.save((err) => {
       if (err) {
@@ -73,19 +75,41 @@ router.get('/seminare', auth, async (req, res) => {
   });
 });
 
-router.post('/seminare/:id', getToken, async (req, res) => {
-  await jwt.verify(
-    req.token,
-    process.env.JWT_SECRET_KEY,
-    { expiresIn: '10s' },
-    (err, authData) => {
-      if (err || req.token == undefined) {
-        res.sendStatus(401);
-      } else {
-        res.json(authData);
-      }
+router.post('/seminare/:id', auth, async (req, res) => {
+  const id = new ObjectId(req.params.id);
+  console.log(id);
+  const seminarEntry = await seminar.findOne({ _id: id });
+  if (!seminarEntry) return res.status(404).send('Seminar not found');
+
+  await User.findOne({ userName: req.user.name }, (err, loginUser) => {
+    if (loginUser.seminars.includes(req.params.id)) {
+      return res.status(400).send('Already attending the Seminar!');
     }
-  );
+    const currentOtp = String(loginUser.currentOtp);
+    const otpValid = otp.verifyOTP(
+      currentOtp,
+      req.body.token,
+      parseInt(loginUser.otpCount, 10)
+    );
+
+    if (otpValid) {
+      const { seminars } = loginUser;
+      seminars.push(req.params.id);
+      User.updateOne(
+        { userName: req.user.name },
+        {
+          $set: {
+            currentOtp: req.body.token,
+            otpCount: loginUser.otpCount - 1,
+            seminars
+          }
+        }
+      );
+      res.send('Successfull entered Seminar');
+    } else {
+      res.status(401).send('OTP invalid!');
+    }
+  });
 });
 
 router.post('/settings/otp', getToken, async (req, res) => {
