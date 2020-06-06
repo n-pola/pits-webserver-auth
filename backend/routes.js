@@ -1,37 +1,50 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const getToken = require('./middlewares/getToken');
 const User = require('./Usermodel/userModel');
-const bcrypt = require('bcrypt');
+const otp = require('./components/sKey');
 
 router.post('/register', async (req, res) => {
   try {
-    let hash = bcrypt.hash(req.body.password, 14);
-    const toRegister = new User({
+    // find existing User
+    const user = await User.findOne({ userName: req.body.userName });
+    if (user) return res.status(400).send('User already registered.');
+
+    const hash = bcrypt.hash(req.body.password, 14);
+    const otpList = await otp.generateOTP(req.body.userName, hash);
+    const newUser = new User({
       userName: req.body.userName,
-      password: await hash
+      password: await hash,
+      currentOtp: otpList[otpList.length - 1],
+      otpCount: otpList.length - 1
+    });
+    await newUser.save((err) => {
+      if (err) {
+        return res
+          .status(400)
+          .send('Upsie Whoopise something went wrong while saving.');
+      }
     });
 
-    console.log(toRegister);
+    // User soll mit voletzem Element aus liste anfangen
+    otpList.pop();
 
-    jwt.sign({ toRegister }, process.env.JWT_SECRET_KEY, async (err, token) => {
-      await toRegister.save((err) => {
-        if (err) {
-          let err = 'Upsie Whoopise something went wrong while saving.';
-          res.Status(500);
-          res.json(err);
-        } else {
-          res.json(toRegister);
-        }
-      });
-    });
+    const token = newUser.generateAuthToken();
+    const response = {
+      name: newUser.userName,
+      token,
+      otpList
+    };
+
+    res.send(response);
   } catch (error) {
     res.send({ error });
   }
 });
 
 router.post('/login', async (req, res) => {
-  let loginUser = {
+  const loginUser = {
     userName: req.body.username,
     password: req.body.password
   };
@@ -61,6 +74,7 @@ router.get('/seminare', getToken, async (req, res) => {
     { expiresIn: '10s' },
     (err, authData) => {
       if (err || req.token == undefined) {
+        console.log(err.message);
         res.sendStatus(401);
       } else {
         res.json(authData);
