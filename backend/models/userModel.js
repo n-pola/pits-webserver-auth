@@ -17,6 +17,10 @@ const Usermodel = new mongoose.Schema({
   otpCount: {
     type: Number,
     required: true
+  },
+  seminars: {
+    type: Array,
+    required: true
   }
 });
 
