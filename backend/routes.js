@@ -3,7 +3,9 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const getToken = require('./middlewares/getToken');
 const User = require('./models/userModel');
+const seminar = require('./models/seminar');
 const otp = require('./components/sKey');
+const auth = require('./middlewares/auth');
 
 router.post('/register', async (req, res) => {
   try {
@@ -64,20 +66,11 @@ router.post('/login', async (req, res) => {
   });
 });
 
-router.get('/seminare', getToken, async (req, res) => {
-  await jwt.verify(
-    req.token,
-    process.env.JWT_SECRET_KEY,
-    { expiresIn: '10s' },
-    (err, authData) => {
-      if (err || req.token == undefined) {
-        console.log(err.message);
-        res.sendStatus(401);
-      } else {
-        res.json(authData);
-      }
-    }
-  );
+router.get('/seminare', auth, async (req, res) => {
+  seminar.find({}, (err, seminars) => {
+    if (err) return res.status(500).send('Internal Error');
+    res.send(seminars);
+  });
 });
 
 router.post('/seminare/:id', getToken, async (req, res) => {
