@@ -7,7 +7,7 @@ const User = require('./models/userModel');
 const seminar = require('./models/seminar');
 const otp = require('./components/sKey');
 const auth = require('./middlewares/auth');
-const admin = require('./models/admin');
+const adminAuth = require('./middlewares/adminAuth')
 
 router.post('/register', async (req, res) => {
   try {
@@ -22,13 +22,12 @@ router.post('/register', async (req, res) => {
       password: await hash,
       currentOtp: otpList[otpList.length - 1],
       otpCount: otpList.length,
-      seminars: []
+      seminars: [],
+      isAdmin: false
     });
     await newUser.save((err) => {
       if (err) {
-        return res
-          .status(400)
-          .send('Upsie Whoopise something went wrong while saving.');
+        console.log(err)
       }
     });
 
@@ -129,56 +128,9 @@ router.post('/settings/otp', getToken, async (req, res) => {
 });
 
 
-router.post('/admin/register', async (req, res) => {
+router.post('/seminare-add', adminAuth, async (req, res) => {
   try {
-    // find existing User
-    const user = await admin.findOne({ userName: req.body.userName });
-    if (user) return res.status(400).send('User already registered.');
-
-    const hash = bcrypt.hash(req.body.password, 14);
-
-    const newUser = new admin({
-      userName: req.body.userName,
-      password: await hash,
-    });
-    await newUser.save((err) => {
-      if (err) {
-        return res
-          .status(400)
-          .send('Something went wrong while saving.');
-      }
-    });
-    res.send(newUser);
-  } catch (error) {
-    console.log(error);
-    res.error({ error });
-  }
-});
-
-
-router.post('/admin/login', async (req, res) => {
-  await admin.findOne({ userName: req.body.userName }, (err, loginUser) => {
-    if (
-      err ||
-      !User ||
-      !bcrypt.compareSync(req.body.password, loginUser.password)
-    ) {
-      res.status(403);
-      res.json('You have no permission to be here.');
-    } else {
-      const token = loginUser.generateAuthToken();
-      const response = {
-        name: loginUser.userName,
-        token
-      };
-      res.send(response);
-    }
-  });
-})
-
-
-router.post('/admin/seminare-add', auth, async (req, res) => {
-  try {
+    console.log(req.user)
     const findSeminar = await seminar.findOne({ title: req.body.title }, (err) => { console.log(err) })
 
     if (findSeminar) {
