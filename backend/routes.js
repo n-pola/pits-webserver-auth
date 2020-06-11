@@ -7,6 +7,7 @@ const User = require('./models/userModel');
 const seminar = require('./models/seminar');
 const otp = require('./components/sKey');
 const auth = require('./middlewares/auth');
+const admin = require('./models/admin');
 
 router.post('/register', async (req, res) => {
   try {
@@ -55,7 +56,7 @@ router.post('/login', async (req, res) => {
       !bcrypt.compareSync(req.body.password, loginUser.password)
     ) {
       res.status(403);
-      res.json('You shouldnt be here.');
+      res.json('You are not allowed to visit this page.');
     } else {
       const token = loginUser.generateAuthToken();
       const response = {
@@ -116,7 +117,7 @@ router.post('/settings/otp', getToken, async (req, res) => {
   await jwt.verify(
     req.token,
     process.env.JWT_SECRET_KEY,
-    { expiresIn: '10s' },
+    { expiresIn: '2 days' },
     (err, authData) => {
       if (err || req.token == undefined) {
         res.sendStatus(401);
@@ -126,5 +127,76 @@ router.post('/settings/otp', getToken, async (req, res) => {
     }
   );
 });
+
+
+router.post('/admin/register', async (req, res) => {
+  try {
+    // find existing User
+    const user = await admin.findOne({ userName: req.body.userName });
+    if (user) return res.status(400).send('User already registered.');
+
+    const hash = bcrypt.hash(req.body.password, 14);
+
+    const newUser = new admin({
+      userName: req.body.userName,
+      password: await hash,
+    });
+    await newUser.save((err) => {
+      if (err) {
+        return res
+          .status(400)
+          .send('Something went wrong while saving.');
+      }
+    });
+    res.send(newUser);
+  } catch (error) {
+    console.log(error);
+    res.error({ error });
+  }
+});
+
+
+router.post('/admin/login', async (req, res) => {
+  await admin.findOne({ userName: req.body.userName }, (err, loginUser) => {
+    if (
+      err ||
+      !User ||
+      !bcrypt.compareSync(req.body.password, loginUser.password)
+    ) {
+      res.status(403);
+      res.json('You have no permission to be here.');
+    } else {
+      const token = loginUser.generateAuthToken();
+      const response = {
+        name: loginUser.userName,
+        token
+      };
+      res.send(response);
+    }
+  });
+})
+
+
+router.post('/admin/seminare-add', auth, async (req, res) => {
+  try {
+    const findSeminar = await seminar.findOne({ title: req.body.title }, (err) => { console.log(err) })
+
+    if (findSeminar) {
+      res.send("Error! Seminar already exsists.")
+    } else {
+      const newSeminar = new seminar({
+        title: req.body.title,
+        date: req.body.date,
+        description: req.body.description
+      })
+      await newSeminar.save((err) => { if (err) console.log(err) })
+    }
+
+    res.send(newSeminar)
+  } catch (error) {
+    res.send("Internal Server Error")
+  }
+});
+
 
 module.exports = router;
