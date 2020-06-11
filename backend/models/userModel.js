@@ -21,12 +21,16 @@ const Usermodel = new mongoose.Schema({
   seminars: {
     type: Array,
     required: true
+  },
+  isAdmin: {
+    type: Boolean,
+    required: true
   }
 });
 
 Usermodel.methods.generateAuthToken = function () {
   const token = jwt.sign(
-    { _id: this._id, name: this.userName },
+    { _id: this._id, name: this.userName, isAdmin: this.isAdmin },
     process.env.JWT_SECRET_KEY,
     { expiresIn: '2d' }
   );
