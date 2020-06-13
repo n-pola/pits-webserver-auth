@@ -1,20 +1,20 @@
+/* eslint-disable consistent-return */
+/* eslint-disable no-console */
 const router = require('express').Router();
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { ObjectId } = require('mongoose').Types;
-const getToken = require('./middlewares/getToken');
+const { authenticator } = require('otplib');
 const User = require('./models/userModel');
 const seminar = require('./models/seminar');
 const otp = require('./components/sKey');
 const auth = require('./middlewares/auth');
-const adminAuth = require('./middlewares/adminAuth')
 
 router.post('/register', async (req, res) => {
   try {
     // find existing User
     const user = await User.findOne({ userName: req.body.userName });
     if (user) return res.status(400).send('User already registered.');
-
+    const secretKey = authenticator.generateSecret();
     const hash = bcrypt.hash(req.body.password, 14);
     const otpList = await otp.generateOTP(req.body.userName, hash);
     const newUser = new User({
@@ -23,11 +23,12 @@ router.post('/register', async (req, res) => {
       currentOtp: otpList[otpList.length - 1],
       otpCount: otpList.length,
       seminars: [],
-      isAdmin: false
+      isAdmin: false,
+      secret: secretKey,
     });
     await newUser.save((err) => {
       if (err) {
-        console.log(err)
+        console.log(err);
       }
     });
 
@@ -35,10 +36,13 @@ router.post('/register', async (req, res) => {
     otpList.pop();
 
     const token = newUser.generateAuthToken();
+    const faToken = authenticator.generate(secretKey);
     const response = {
       name: newUser.userName,
+      otpList,
       token,
-      otpList
+      secretKey,
+      faToken,
     };
 
     res.send(response);
@@ -50,9 +54,9 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   await User.findOne({ userName: req.body.userName }, (err, loginUser) => {
     if (
-      err ||
-      !User ||
-      !bcrypt.compareSync(req.body.password, loginUser.password)
+      err
+      || !User
+      || !bcrypt.compareSync(req.body.password, loginUser.password)
     ) {
       res.status(403);
       res.json('You are not allowed to visit this page.');
@@ -60,9 +64,8 @@ router.post('/login', async (req, res) => {
       const token = loginUser.generateAuthToken();
       const response = {
         name: loginUser.userName,
-        token
+        token,
       };
-
       res.send(response);
     }
   });
@@ -78,8 +81,8 @@ router.get('/seminare', auth, async (req, res) => {
 router.post('/seminare/:id', auth, async (req, res) => {
   const id = new ObjectId(req.params.id);
   console.log(id);
-  const seminarEntry = await seminar.findOne({ _id: id });
-  if (!seminarEntry) return res.status(404).send('Seminar not found');
+  const seminarEntry = await User.findOne({ _id: id });
+  if (seminarEntry) return res.status(404).send('Seminar not found');
 
   await User.findOne({ userName: req.user.name }, (err, loginUser) => {
     if (loginUser.seminars.includes(req.params.id)) {
@@ -89,7 +92,7 @@ router.post('/seminare/:id', auth, async (req, res) => {
     const otpValid = otp.verifyOTP(
       currentOtp,
       req.body.token,
-      parseInt(loginUser.otpCount, 10)
+      parseInt(loginUser.otpCount, 10),
     );
 
     if (otpValid) {
@@ -101,9 +104,9 @@ router.post('/seminare/:id', auth, async (req, res) => {
           $set: {
             currentOtp: req.body.token,
             otpCount: loginUser.otpCount - 1,
-            seminars
-          }
-        }
+            seminars,
+          },
+        },
       );
       res.send('Successfull entered Seminar');
     } else {
@@ -112,43 +115,47 @@ router.post('/seminare/:id', auth, async (req, res) => {
   });
 });
 
-router.post('/settings/otp', getToken, async (req, res) => {
-  await jwt.verify(
-    req.token,
-    process.env.JWT_SECRET_KEY,
-    { expiresIn: '2 days' },
-    (err, authData) => {
-      if (err || req.token == undefined) {
-        res.sendStatus(401);
-      } else {
-        res.json(authData);
-      }
-    }
-  );
+router.post('/settings/otp', auth, async (req, res) => {
+  // working on it.
 });
 
 
-router.post('/seminare-add', adminAuth, async (req, res) => {
-  try {
-    console.log(req.user)
-    const findSeminar = await seminar.findOne({ title: req.body.title }, (err) => { console.log(err) })
-
-    if (findSeminar) {
-      res.send("Error! Seminar already exsists.")
-    } else {
-      const newSeminar = new seminar({
-        title: req.body.title,
-        date: req.body.date,
-        description: req.body.description
-      })
-      await newSeminar.save((err) => { if (err) console.log(err) })
+router.post('/seminare-add', auth, async (req, res) => {
+  if (req.user.isAdmin === true) {
+    try {
+      console.log(req.user);
+      const findSeminar = await User.findOne({ title: req.body.title }, (err) => { console.log(err); });
+      if (findSeminar) {
+        res.send('Error! Seminar already exsists.');
+      } else {
+        // eslint-disable-next-line new-cap
+        const newSeminar = new seminar({
+          title: req.body.title,
+          date: req.body.date,
+          description: req.body.description,
+        });
+        await newSeminar.save((err) => { if (err) console.log(err); });
+        res.send(newSeminar);
+      }
+    } catch (error) {
+      res.send('Internal Server Error');
     }
-
-    res.send(newSeminar)
-  } catch (error) {
-    res.send("Internal Server Error")
+  } else {
+    res.status(401).send('Youre not allowed to be here!');
   }
 });
 
-
+router.post('/login/2fa', (req, res) => {
+  const otpToken = req.body.token;
+  try {
+    const isValid = authenticator.check(otpToken, req.body.secret);
+    if (isValid) {
+      res.status(200).send('Authorized');
+    } else {
+      res.status(401).send('Unauthorized!');
+    }
+  } catch (error) {
+    console.error(error);
+  }
+});
 module.exports = router;
