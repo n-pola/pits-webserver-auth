@@ -3,16 +3,16 @@ const mongoose = require('mongoose');
 const seminar = new mongoose.Schema({
   title: {
     type: String,
-    required: true
+    required: true,
   },
   date: {
     type: Date,
-    required: true
+    required: true,
   },
   description: {
     type: String,
-    required: true
-  }
+    required: true,
+  },
 });
 
 module.exports = mongoose.model('seminar', seminar);
