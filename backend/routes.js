@@ -2,11 +2,12 @@ const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { ObjectId } = require('mongoose').Types;
-const getToken = require('./middlewares/getToken');
 const User = require('./models/userModel');
 const seminar = require('./models/seminar');
 const otp = require('./components/sKey');
 const auth = require('./middlewares/auth');
+const totp = require('./components/totp');
+const { verifyTOTP } = require('./components/totp');
 
 router.post('/register', async (req, res) => {
   try {
@@ -16,12 +17,14 @@ router.post('/register', async (req, res) => {
 
     const hash = await bcrypt.hash(req.body.password, 14);
     const otpList = await otp.generateOTP(req.body.userName, hash);
+    const { imageUrl, secret } = await totp.generateTOTP(req.body.userName);
     const newUser = new User({
       userName: req.body.userName,
       password: hash,
       currentOtp: otpList[otpList.length - 1],
       otpCount: otpList.length,
       seminars: [],
+      secret,
       isAdmin: false,
     });
     await newUser.save((err) => {
@@ -34,17 +37,20 @@ router.post('/register', async (req, res) => {
       // User soll mit voletzem Element aus liste anfangen
       otpList.pop();
 
-      const token = newUser.generateAuthToken();
+      const token = newUser.generateAuthToken(false);
       const response = {
         name: newUser.userName,
         token,
         otpList,
+        secret,
+        imageUrl,
       };
 
       res.send(response);
     });
   } catch (error) {
-    res.send({ error });
+    console.log(error);
+    res.status(500).send('Internal Error');
   }
 });
 
@@ -58,13 +64,31 @@ router.post('/login', async (req, res) => {
       res.status(403);
       res.json('You shouldnt be here.');
     } else {
-      const token = loginUser.generateAuthToken();
+      const token = loginUser.generateAuthToken(false);
       const response = {
         name: loginUser.userName,
         token,
       };
 
       res.send(response);
+    }
+  });
+});
+
+router.post('/login/2fa', auth, async (req, res) => {
+  await User.findOne({ userName: req.user.name }, (err, loginUser) => {
+    const isValid = verifyTOTP(req.body.token, loginUser.secret);
+    if (isValid) {
+      const token = loginUser.generateAuthToken(true);
+      const response = {
+        name: loginUser.userName,
+        token,
+      };
+
+      res.send(response);
+    } else {
+      res.status(401);
+      res.json('Wrong 2FA');
     }
   });
 });
@@ -133,6 +157,11 @@ router.post('/seminare/:id', auth, async (req, res) => {
             otpCount: loginUser.otpCount - 1,
             seminars,
           },
+        }, (err) => {
+          if (err) {
+            console.log(err);
+            res.status(500).send('Internal Error');
+          }
         },
       );
       res.send('Successfull entered Seminar');
@@ -142,7 +171,7 @@ router.post('/seminare/:id', auth, async (req, res) => {
   });
 });
 
-router.post('/settings/otp', getToken, async (req, res) => {
+router.post('/settings/otp', auth, async (req, res) => {
   await jwt.verify(
     req.token,
     process.env.JWT_SECRET_KEY,
