@@ -4,31 +4,41 @@ const jwt = require('jsonwebtoken');
 const Usermodel = new mongoose.Schema({
   userName: {
     type: String,
-    required: true
+    required: true,
   },
   password: {
     type: String,
-    required: true
+    required: true,
   },
   currentOtp: {
     type: Number,
-    required: true
+    required: true,
   },
   otpCount: {
     type: Number,
-    required: true
+    required: true,
   },
   seminars: {
     type: Array,
-    required: true
-  }
+    required: true,
+  },
+  secret: {
+    type: String,
+    required: true,
+  },
+  isAdmin: {
+    type: Boolean,
+    required: true,
+  },
 });
 
-Usermodel.methods.generateAuthToken = function () {
+Usermodel.methods.generateAuthToken = function (authedTOTP) {
   const token = jwt.sign(
-    { _id: this._id, name: this.userName },
+    {
+      _id: this._id, name: this.userName, isAdmin: this.isAdmin, authedTOTP,
+    },
     process.env.JWT_SECRET_KEY,
-    { expiresIn: '2d' }
+    { expiresIn: '2d' },
   );
   return token;
 };
