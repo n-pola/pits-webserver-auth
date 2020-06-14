@@ -22,7 +22,7 @@ router.post('/register', async (req, res) => {
       userName: req.body.userName,
       password: hash,
       currentOtp: otpList[otpList.length - 1],
-      otpCount: otpList.length,
+      otpCount: otpList.length - 1,
       seminars: [],
       secret,
       isAdmin: false,
