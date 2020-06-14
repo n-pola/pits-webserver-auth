@@ -22,15 +22,21 @@ const Usermodel = new mongoose.Schema({
     type: Array,
     required: true,
   },
+  secret: {
+    type: String,
+    required: true,
+  },
   isAdmin: {
     type: Boolean,
     required: true,
   },
 });
 
-Usermodel.methods.generateAuthToken = function () {
+Usermodel.methods.generateAuthToken = function (authedTOTP) {
   const token = jwt.sign(
-    { _id: this._id, name: this.userName, isAdmin: this.isAdmin },
+    {
+      _id: this._id, name: this.userName, isAdmin: this.isAdmin, authedTOTP,
+    },
     process.env.JWT_SECRET_KEY,
     { expiresIn: '2d' },
   );
