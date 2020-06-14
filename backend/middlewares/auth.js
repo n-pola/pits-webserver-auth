@@ -19,10 +19,15 @@ module.exports = function (req, res, next) {
   try {
     // if can verify the token, set req.user and pass to next middleware
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    console.log(req.originalUrl);
+    if (!decoded.authedTOTP && (req.originalUrl != '/login/2fa')) {
+      throw new Error('No 2FA!');
+    }
     req.user = decoded;
     next();
   } catch (ex) {
     // if invalid token
-    res.status(401).send('Invalid token.');
+    console.log(ex.message);
+    res.status(401).send(ex.message);
   }
 };
