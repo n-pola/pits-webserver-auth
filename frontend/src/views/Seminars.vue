@@ -15,14 +15,13 @@
         </b-card-body>
       </b-card>
     </div>
-    <p>
-      <router-link to="/login">Logout</router-link>
-    </p>
+    <b-button @click="logoutAction" variant="danger">Logout</b-button>
   </div>
 </template>
 
 <script>
 import { mapState, mapActions } from 'vuex';
+import { router } from '../router';
 
 export default {
   computed: {
@@ -38,7 +37,12 @@ export default {
     ...mapActions('users', {
       getAllUsers: 'getAll',
       deleteUser: 'delete'
-    })
+    }),
+    ...mapActions('account', ['logout']),
+    logoutAction() {
+      this.logout();
+      router.push('/login');
+    }
   }
 };
 </script>
