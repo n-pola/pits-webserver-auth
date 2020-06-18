@@ -1,4 +1,4 @@
-# pits-webserver-auth
+# frontend
 
 ## Project setup
 ```

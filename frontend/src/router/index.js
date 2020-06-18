@@ -18,23 +18,6 @@ const routes = [
     // which is lazy-loaded when the route is visited.
     component: () =>
       import(/* webpackChunkName: "about" */ "../views/About.vue")
-  },
-  {
-    path: "/register",
-    name: "Register",
-    component: ()=>  import("../views/Register.vue"),
-    data: () => ({
-      username: '',
-      password: ''
-    }),
-    methods: {
-      submit: function() {
-        console.log(this.username, this.password);
-  
-        this.username = '';
-        this.password = '';
-      }
-    }
   }
 ];
 
