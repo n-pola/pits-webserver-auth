@@ -56,14 +56,13 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   await User.findOne({ userName: req.body.userName }, (err, loginUser) => {
-    if (
-      err
-      || !User
-      || !bcrypt.compareSync(req.body.password, loginUser.password)
-    ) {
-      res.status(403);
-      res.json('You shouldnt be here.');
-    } else {
+    if (err) {
+      return res.status(500).send('Internal Error');
+    }
+    if (!loginUser) {
+      return res.status(403).send({ message: 'Wrong Username or Password' });
+    }
+    if (bcrypt.compareSync(req.body.password, loginUser.password)) {
       const token = loginUser.generateAuthToken(false);
       const response = {
         name: loginUser.userName,
