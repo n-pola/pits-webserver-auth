@@ -3,7 +3,7 @@ import Vuex from "vuex";
 
 import { account } from "./account-module.js";
 import { alert } from "./alert";
-import { users } from "./seminars";
+import { seminars } from "./seminars";
 
 Vue.use(Vuex);
 
@@ -11,5 +11,5 @@ export default new Vuex.Store({
   state: {},
   mutations: {},
   actions: {},
-  modules: { account, alert, users }
+  modules: { account, alert, seminars }
 });

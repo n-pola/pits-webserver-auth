@@ -2,16 +2,18 @@
   <div>
     <h1>Hi {{ account.user.name }}!</h1>
     <h3>Aktuelle Seminare:</h3>
-    <em v-if="users.loading">Loading users...</em>
-    <span v-if="users.error" class="text-danger">ERROR: {{ users.error }}</span>
-    <div v-if="users.items">
-      <b-card no-body v-for="user in users.items" :key="user._id">
+    <em v-if="seminars.loading">Loading users...</em>
+    <span v-if="seminars.error" class="text-danger"
+      >ERROR: {{ users.error }}</span
+    >
+    <div v-if="seminars.items">
+      <b-card no-body v-for="seminar in seminars.items" :key="seminar._id">
         <b-card-body>
-          <b-card-title>{{ user.title }}</b-card-title>
+          <b-card-title>{{ seminar.title }}</b-card-title>
           <b-card-text>
-            <p>{{ user.description }}</p></b-card-text
+            <p>{{ seminar.description }}</p></b-card-text
           >
-          <b-button href="#" variant="primary" :data-vue-id="user._id"
+          <b-button href="#" variant="primary" :data-vue-id="seminar._id"
             >Buchen</b-button
           >
         </b-card-body>
@@ -29,16 +31,15 @@ export default {
   computed: {
     ...mapState({
       account: (state) => state.account,
-      users: (state) => state.users.all
+      seminars: (state) => state.seminars.all
     })
   },
   created() {
-    this.getAllUsers();
+    this.getAllSeminars();
   },
   methods: {
-    ...mapActions('users', {
-      getAllUsers: 'getAll',
-      deleteUser: 'delete'
+    ...mapActions('seminars', {
+      getAllSeminars: 'getAll'
     }),
     ...mapActions('account', ['logout']),
     logoutAction() {
