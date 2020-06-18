@@ -13,7 +13,7 @@ router.post('/register', async (req, res) => {
   try {
     // find existing User
     const user = await User.findOne({ userName: req.body.userName });
-    if (user) return res.status(400).send('User already registered.');
+    if (user) return res.status(400).send({ message: 'User already registered.' });
 
     const hash = await bcrypt.hash(req.body.password, 14);
     const otpList = await otp.generateOTP(req.body.userName, hash);
@@ -70,6 +70,8 @@ router.post('/login', async (req, res) => {
       };
 
       res.send(response);
+    } else {
+      res.status(403).send({ message: 'Wrong Username or Password' });
     }
   });
 });
@@ -86,8 +88,8 @@ router.post('/login/2fa', auth, async (req, res) => {
 
       res.send(response);
     } else {
-      res.status(401);
-      res.json('Wrong 2FA');
+      res.status(403);
+      res.json({ message: 'Wrong 2FA' });
     }
   });
 });
