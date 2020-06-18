@@ -84,6 +84,7 @@ router.post('/login/2fa', auth, async (req, res) => {
       const response = {
         name: loginUser.userName,
         token,
+        seminars: loginUser.seminars,
       };
 
       res.send(response);
