@@ -13,9 +13,26 @@
           <b-card-text>
             <p>{{ seminar.description }}</p></b-card-text
           >
-          <b-button href="#" variant="primary" :data-vue-id="seminar._id"
-            >Buchen</b-button
+          <span
+            :id="`tooltip-target-` + seminar._id"
+            class="d-inline-block"
+            tabindex="0"
           >
+            <b-button
+              :disabled="account.user.seminars.includes(seminar._id)"
+              href="#"
+              variant="primary"
+              :data-vue-id="seminar._id"
+              >Buchen</b-button
+            >
+          </span>
+          <b-tooltip
+            v-if="account.user.seminars.includes(seminar._id)"
+            :target="`tooltip-target-` + seminar._id"
+            triggers="hover"
+          >
+            Seminar bereits gebucht!
+          </b-tooltip>
         </b-card-body>
       </b-card>
     </div>
@@ -24,27 +41,27 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex';
-import { router } from '../router';
+import { mapState, mapActions } from "vuex";
+import { router } from "../router";
 
 export default {
   computed: {
     ...mapState({
-      account: (state) => state.account,
-      seminars: (state) => state.seminars.all
+      account: state => state.account,
+      seminars: state => state.seminars.all
     })
   },
   created() {
     this.getAllSeminars();
   },
   methods: {
-    ...mapActions('seminars', {
-      getAllSeminars: 'getAll'
+    ...mapActions("seminars", {
+      getAllSeminars: "getAll"
     }),
-    ...mapActions('account', ['logout']),
+    ...mapActions("account", ["logout"]),
     logoutAction() {
       this.logout();
-      router.push('/login');
+      router.push("/login");
     }
   }
 };
