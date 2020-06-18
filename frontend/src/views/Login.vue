@@ -82,7 +82,7 @@ export default {
   },
   created() {
     // reset login status
-    this.logout();
+    //this.logout();
   },
   methods: {
     ...mapActions('account', ['login', 'logout', 'enter2Fa']),

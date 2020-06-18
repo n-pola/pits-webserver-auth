@@ -49,7 +49,7 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex';
+import { mapState, mapActions, mapMutations } from 'vuex';
 import { router } from '../router';
 
 export default {
@@ -67,12 +67,14 @@ export default {
   },
   methods: {
     ...mapActions('account', ['register']),
+    ...mapMutations('account', ['loginSuccess']),
     handleSubmit() {
       this.submitted = true;
       this.register(this.newuser);
     },
     goHome() {
-      router.push('/');
+      this.loginSuccess();
+      router.push('/login');
     }
   }
 };
