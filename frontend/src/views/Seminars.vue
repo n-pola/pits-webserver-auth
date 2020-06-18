@@ -11,7 +11,9 @@
           <b-card-text>
             <p>{{ user.description }}</p></b-card-text
           >
-          <b-button href="#" variant="primary">Buchen</b-button>
+          <b-button href="#" variant="primary" :data-vue-id="user._id"
+            >Buchen</b-button
+          >
         </b-card-body>
       </b-card>
     </div>
