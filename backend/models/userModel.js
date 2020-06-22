@@ -11,7 +11,7 @@ const Usermodel = new mongoose.Schema({
     required: true,
   },
   currentOtp: {
-    type: Number,
+    type: String,
     required: true,
   },
   otpCount: {

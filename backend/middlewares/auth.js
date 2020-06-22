@@ -28,6 +28,6 @@ module.exports = function (req, res, next) {
   } catch (ex) {
     // if invalid token
     console.log(ex.message);
-    res.status(401).send(ex.message);
+    res.status(401).send({ message: ex.message });
   }
 };

@@ -13,7 +13,7 @@ router.post('/register', async (req, res) => {
   try {
     // find existing User
     const user = await User.findOne({ userName: req.body.userName });
-    if (user) return res.status(400).send('User already registered.');
+    if (user) return res.status(400).send({ message: 'User already registered.' });
 
     const hash = await bcrypt.hash(req.body.password, 14);
     const otpList = await otp.generateOTP(req.body.userName, hash);
@@ -56,14 +56,13 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   await User.findOne({ userName: req.body.userName }, (err, loginUser) => {
-    if (
-      err
-      || !User
-      || !bcrypt.compareSync(req.body.password, loginUser.password)
-    ) {
-      res.status(403);
-      res.json('You shouldnt be here.');
-    } else {
+    if (err) {
+      return res.status(500).send('Internal Error');
+    }
+    if (!loginUser) {
+      return res.status(403).send({ message: 'Wrong Username or Password' });
+    }
+    if (bcrypt.compareSync(req.body.password, loginUser.password)) {
       const token = loginUser.generateAuthToken(false);
       const response = {
         name: loginUser.userName,
@@ -71,6 +70,8 @@ router.post('/login', async (req, res) => {
       };
 
       res.send(response);
+    } else {
+      res.status(403).send({ message: 'Wrong Username or Password' });
     }
   });
 });
@@ -83,12 +84,13 @@ router.post('/login/2fa', auth, async (req, res) => {
       const response = {
         name: loginUser.userName,
         token,
+        seminars: loginUser.seminars,
       };
 
       res.send(response);
     } else {
-      res.status(401);
-      res.json('Wrong 2FA');
+      res.status(403);
+      res.json({ message: 'Wrong 2FA' });
     }
   });
 });
@@ -130,14 +132,15 @@ router.post('/seminare', auth, async (req, res) => {
 });
 
 router.post('/seminare/:id', auth, async (req, res) => {
+  if (!req.body.token) return res.status(403).send({ message: 'No tan provided!' });
   const id = new ObjectId(req.params.id);
   console.log(id);
   const seminarEntry = await seminar.findOne({ _id: id });
-  if (!seminarEntry) return res.status(404).send('Seminar not found');
+  if (!seminarEntry) return res.status(404).send({ message: 'Seminar not found' });
 
   await User.findOne({ userName: req.user.name }, (err, loginUser) => {
     if (loginUser.seminars.includes(req.params.id)) {
-      return res.status(400).send('Already attending the Seminar!');
+      return res.status(400).send({ message: 'Already attending the Seminar!' });
     }
     const currentOtp = String(loginUser.currentOtp);
     const otpValid = otp.verifyOTP(
@@ -160,13 +163,13 @@ router.post('/seminare/:id', auth, async (req, res) => {
         }, (err) => {
           if (err) {
             console.log(err);
-            res.status(500).send('Internal Error');
+            res.status(500).send({ message: 'Internal Error' });
           }
         },
       );
-      res.send('Successfull entered Seminar');
+      res.send({ message: 'Successfully entered Seminar', id: req.params.id });
     } else {
-      res.status(401).send('OTP invalid!');
+      res.status(403).send({ message: 'OTP invalid!' });
     }
   });
 });
