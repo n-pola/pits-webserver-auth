@@ -6,9 +6,15 @@ const state = {
 const actions = {
   success({ commit }, message) {
     commit("success", message);
+    setTimeout(()=> {
+      commit("clear");
+    }, 7500) 
   },
   error({ commit }, message) {
     commit("error", message);
+    setTimeout(()=> {
+      commit("clear");
+    }, 7500) 
   },
   clear({ commit }) {
     commit("clear");

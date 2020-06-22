@@ -132,14 +132,15 @@ router.post('/seminare', auth, async (req, res) => {
 });
 
 router.post('/seminare/:id', auth, async (req, res) => {
+  if (!req.body.token) return res.status(403).send({ message: 'No tan provided!' });
   const id = new ObjectId(req.params.id);
   console.log(id);
   const seminarEntry = await seminar.findOne({ _id: id });
-  if (!seminarEntry) return res.status(404).send('Seminar not found');
+  if (!seminarEntry) return res.status(404).send({ message: 'Seminar not found' });
 
   await User.findOne({ userName: req.user.name }, (err, loginUser) => {
     if (loginUser.seminars.includes(req.params.id)) {
-      return res.status(400).send('Already attending the Seminar!');
+      return res.status(400).send({ message: 'Already attending the Seminar!' });
     }
     const currentOtp = String(loginUser.currentOtp);
     const otpValid = otp.verifyOTP(
@@ -162,13 +163,13 @@ router.post('/seminare/:id', auth, async (req, res) => {
         }, (err) => {
           if (err) {
             console.log(err);
-            res.status(500).send('Internal Error');
+            res.status(500).send({ message: 'Internal Error' });
           }
         },
       );
-      res.send('Successfull entered Seminar');
+      res.send({ message: 'Successfully entered Seminar', id: req.params.id });
     } else {
-      res.status(401).send('OTP invalid!');
+      res.status(403).send({ message: 'OTP invalid!' });
     }
   });
 });

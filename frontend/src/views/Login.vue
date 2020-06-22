@@ -48,9 +48,9 @@
             v-model="totpToken"
             name="_2fa"
             class="form-control"
-            :class="{ 'is-invalid': submitted && !totpToken }"
+            :class="{ 'is-invalid': submitted2fa && !totpToken }"
           />
-          <div v-show="submitted && !totpToken" class="invalid-feedback">
+          <div v-show="submitted2fa && !totpToken" class="invalid-feedback">
             2FA Token is required
           </div>
         </div>
@@ -65,27 +65,27 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex';
+import { mapState, mapActions } from "vuex";
 
 export default {
   data() {
     return {
-      username: '',
-      password: '',
+      username: "",
+      password: "",
       submitted: false,
-      totpToken: '',
+      totpToken: "",
       submitted2fa: false
     };
   },
   computed: {
-    ...mapState('account', ['status'])
+    ...mapState("account", ["status"])
   },
   created() {
     // reset login status
     //this.logout();
   },
   methods: {
-    ...mapActions('account', ['login', 'logout', 'enter2Fa']),
+    ...mapActions("account", ["login", "logout", "enter2Fa"]),
     handleSubmit() {
       this.submitted = true;
       const { username, password } = this;

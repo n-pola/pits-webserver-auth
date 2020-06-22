@@ -56,6 +56,11 @@ const actions = {
         dispatch("alert/error", error, { root: true });
       }
     );
+  },
+  addSeminar({commit}, {user, seminar}) {
+    user.seminars.push(seminar.id);
+    localStorage.setItem("user", JSON.stringify(user));
+    commit("addSeminar", user);
   }
 };
 
@@ -89,6 +94,9 @@ const mutations = {
   },
   registerFailure(state) {
     state.status = {};
+  },
+  addSeminar(state, user) {
+    state.user = user;
   }
 };
 

@@ -88,10 +88,11 @@ function getAll() {
   );
 }
 
-function bookSeminar(seminarID) {
+function bookSeminar(seminarID, token) {
   const requestOptions = {
     method: "POST",
-    headers: authHeader()
+    headers: { ...authHeader(), "Content-Type": "application/json" },
+    body: JSON.stringify({ token })
   };
 
   return fetch(`${config.apiUrl}/seminare/${seminarID}`, requestOptions).then(
