@@ -122,7 +122,8 @@ const mutations = {
     state.user = user;
   },
   add2faSucces(state, user) {
-    (state.status = { showTan: true }), (state.user = user);
+    state.status = { showTan: true };
+    state.user = user;
   }
 };
 
