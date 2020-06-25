@@ -94,6 +94,7 @@ function register2Fa(secret) {
         };
         localStorage.setItem("user", JSON.stringify(saveUser));
       }
+      user.otpList = user.otpList.reverse();
       return user;
     });
 }
