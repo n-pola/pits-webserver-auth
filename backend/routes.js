@@ -21,6 +21,7 @@ router.post('/register', async (req, res) => {
     const newUser = new User({
       userName: req.body.userName,
       password: hash,
+      mail: req.body.eMail,
       currentOtp: otpList[otpList.length - 1],
       otpCount: otpList.length - 1,
       seminars: [],
@@ -31,8 +32,8 @@ router.post('/register', async (req, res) => {
       if (err) {
         console.log(err);
         return res
-          .status(400)
-          .send('Upsie Whoopise something went wrong while saving.');
+          .status(500)
+          .send({ message: 'Internal Server Error' });
       }
       // User soll mit voletzem Element aus liste anfangen
       otpList.pop();
