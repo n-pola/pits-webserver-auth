@@ -5,6 +5,7 @@ export const userService = {
   totp,
   logout,
   register,
+  register2Fa,
   getAll,
   bookSeminar,
   update,
@@ -64,6 +65,26 @@ function register(userName, password, eMail) {
   };
 
   return fetch(`${config.apiUrl}/register`, requestOptions)
+    .then(handleResponse)
+    .then(user => {
+      if (user.token) {
+        let saveUser = {
+          name: user.name,
+          token: user.token
+        };
+        localStorage.setItem("user", JSON.stringify(saveUser));
+      }
+      return user;
+    });
+}
+
+function register2Fa(secret) {
+  const requestOptions = {
+    method: "POST",
+    headers: { ...authHeader(), "Content-Type": "application/json" },
+    body: JSON.stringify({ secret })
+  };
+  return fetch(`${config.apiUrl}/register/2fa`, requestOptions)
     .then(handleResponse)
     .then(user => {
       if (user.token) {
