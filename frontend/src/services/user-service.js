@@ -56,11 +56,11 @@ function logout() {
   localStorage.removeItem("user");
 }
 
-function register(userName, password) {
+function register(userName, password, eMail) {
   const requestOptions = {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userName, password })
+    body: JSON.stringify({ userName, password, eMail })
   };
 
   return fetch(`${config.apiUrl}/register`, requestOptions)

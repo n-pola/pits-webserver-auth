@@ -38,10 +38,10 @@ const actions = {
     userService.logout();
     commit("logout");
   },
-  register({ dispatch, commit }, { username, password }) {
+  register({ dispatch, commit }, { username, password, eMail }) {
     commit("registerRequest", { username });
 
-    userService.register(username, password).then(
+    userService.register(username, password, eMail).then(
       user => {
         commit("registerSuccess", user);
         //router.push("/login");
