@@ -6,7 +6,6 @@ const User = require('./models/userModel');
 const seminar = require('./models/seminar');
 const otp = require('./components/sKey');
 const auth = require('./middlewares/auth');
-const totp = require('./components/totp');
 const { verifyTOTP } = require('./components/totp');
 
 router.post('/register', async (req, res) => {
@@ -16,16 +15,11 @@ router.post('/register', async (req, res) => {
     if (user) return res.status(400).send({ message: 'User already registered.' });
 
     const hash = await bcrypt.hash(req.body.password, 14);
-    const otpList = await otp.generateOTP(req.body.userName, hash);
-    const { imageUrl, secret } = await totp.generateTOTP(req.body.userName);
     const newUser = new User({
       userName: req.body.userName,
       password: hash,
       mail: req.body.eMail,
-      currentOtp: otpList[otpList.length - 1],
-      otpCount: otpList.length - 1,
       seminars: [],
-      secret,
       isAdmin: false,
     });
     await newUser.save((err) => {
@@ -35,16 +29,11 @@ router.post('/register', async (req, res) => {
           .status(500)
           .send({ message: 'Internal Server Error' });
       }
-      // User soll mit voletzem Element aus liste anfangen
-      otpList.pop();
 
       const token = newUser.generateAuthToken(false);
       const response = {
         name: newUser.userName,
         token,
-        otpList,
-        secret,
-        imageUrl,
       };
 
       res.send(response);
@@ -53,6 +42,39 @@ router.post('/register', async (req, res) => {
     console.log(error);
     res.status(500).send('Internal Error');
   }
+});
+
+router.post('/register/2fa', auth, async (req, res) => {
+  let otpList;
+  await User.findOne({ userName: req.user.name }, async (err, loginUser) => {
+    otpList = await otp.generateOTP(req.body.userName, loginUser.password);
+    User.updateOne(
+      { userName: req.user.name },
+      {
+        $set: {
+          currentOtp: otpList[otpList.length - 1],
+          otpCount: otpList.length - 1,
+          secret: req.body.secret,
+        },
+      }, (err, updateUser) => {
+        if (err) {
+          console.log(err);
+          res.status(500).send({ message: 'Internal Error' });
+        } else {
+          const token = loginUser.generateAuthToken(true);
+          otpList.pop();
+          const response = {
+            name: updateUser.userName,
+            token,
+            otpList,
+            seminars: loginUser.seminars,
+          };
+
+          res.send(response);
+        }
+      },
+    );
+  });
 });
 
 router.post('/login', async (req, res) => {
