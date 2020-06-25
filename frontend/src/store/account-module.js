@@ -56,6 +56,22 @@ const actions = {
       }
     );
   },
+  register2Fa({ dispatch, commit }, { clientSecrent }) {
+    userService.register2Fa(clientSecrent).then(
+      user => {
+        commit("add2faSucces", user);
+        //router.push("/login");
+        setTimeout(() => {
+          // display success message after route change completes
+          dispatch("alert/success", "Registration successful", { root: true });
+        });
+      },
+      error => {
+        commit("registerFailure", error);
+        dispatch("alert/error", error, { root: true });
+      }
+    );
+  },
   addSeminar({ commit }, { user, seminar }) {
     user.seminars.push(seminar.id);
     localStorage.setItem("user", JSON.stringify(user));
@@ -104,6 +120,9 @@ const mutations = {
   },
   addSeminar(state, user) {
     state.user = user;
+  },
+  add2faSucces(state, user) {
+    (state.status = { showTan: true }), (state.user = user);
   }
 };
 
