@@ -10,6 +10,10 @@ const Usermodel = new mongoose.Schema({
     type: String,
     required: true,
   },
+  mail: {
+    type: String,
+    required: true,
+  },
   currentOtp: {
     type: String,
     required: true,
