@@ -2,3 +2,19 @@
   min-height: 100vh;
   margin-bottom: 0 !important;
 }
+
+ul {
+  display: flex;
+  flex-flow: row wrap;
+  margin: 5px;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+li {
+  list-style: none;
+  background: #eee;
+  padding: 2px 4px;
+  border-radius: 4px;
+  margin: 5px;
+}
