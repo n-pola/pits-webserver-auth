@@ -12,6 +12,15 @@
         />
       </div>
       <div class="form-group">
+        <label for="mail">E-Mail</label>
+        <input
+          type="email"
+          v-model="newuser.eMail"
+          name="mail"
+          class="form-control"
+        />
+      </div>
+      <div class="form-group">
         <label htmlFor="password">Password</label>
         <input
           type="password"
@@ -49,32 +58,33 @@
 </template>
 
 <script>
-import { mapState, mapActions, mapMutations } from 'vuex';
-import { router } from '../router';
+import { mapState, mapActions, mapMutations } from "vuex";
+import { router } from "../router";
 
 export default {
   data() {
     return {
       newuser: {
-        username: '',
-        password: ''
+        username: "",
+        password: "",
+        eMail: ""
       },
       submitted: false
     };
   },
   computed: {
-    ...mapState('account', ['status', 'user'])
+    ...mapState("account", ["status", "user"])
   },
   methods: {
-    ...mapActions('account', ['register']),
-    ...mapMutations('account', ['loginSuccess']),
+    ...mapActions("account", ["register"]),
+    ...mapMutations("account", ["loginSuccess"]),
     handleSubmit() {
       this.submitted = true;
       this.register(this.newuser);
     },
     goHome() {
       this.loginSuccess();
-      router.push('/login');
+      router.push("/login");
     }
   }
 };
