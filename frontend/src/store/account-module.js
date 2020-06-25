@@ -22,7 +22,7 @@ const actions = {
       }
     );
   },
-  enter2Fa({ dispatch, commit }, { token }) {
+  enter2Fa({ commit }, { token }) {
     console.log(token);
     userService.totp(token).then(
       user => {
@@ -30,8 +30,7 @@ const actions = {
         router.push("/");
       },
       error => {
-        commit("loginFailure", error);
-        dispatch("alert/error", error, { root: true });
+        commit("_2faFailure", error);
       }
     );
   },
@@ -57,7 +56,7 @@ const actions = {
       }
     );
   },
-  addSeminar({commit}, {user, seminar}) {
+  addSeminar({ commit }, { user, seminar }) {
     user.seminars.push(seminar.id);
     localStorage.setItem("user", JSON.stringify(user));
     commit("addSeminar", user);
@@ -76,6 +75,14 @@ const mutations = {
   _2faSuccess(state, user) {
     state.status = { loggedIn: true };
     state.user = user;
+  },
+  _2faFailure(state, error) {
+    state.status = {
+      _2faNeeded: true,
+      _2faFailure: true,
+      error,
+      type: "alert-danger"
+    };
   },
   loginFailure(state) {
     state.status = {};
