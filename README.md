@@ -2,6 +2,8 @@
 
 ## PITS SS20 George Iyawe, Nils Polarek
 
+❗ Wir haben das System größtenteils gemeinsame mit [VS Code Live Share](https://visualstudio.microsoft.com/de/services/live-share/) erstellt. Der tatsächliche Workload, anders als es die Commits suggerieren würden, ist 50/50 ❗
+
 ### Installation
 1. `.env` Datei im Ordner Backend anlegen
 2. `.env` Datei mit Secret Key für JWT Token füllen `JWT_SECRET_KEY = "xxx..."`
