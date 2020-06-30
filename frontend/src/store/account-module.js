@@ -22,7 +22,7 @@ const actions = {
       }
     );
   },
-  enter2Fa({ dispatch, commit }, { token }) {
+  enter2Fa({ commit }, { token }) {
     console.log(token);
     userService.totp(token).then(
       user => {
@@ -30,8 +30,7 @@ const actions = {
         router.push("/");
       },
       error => {
-        commit("loginFailure", error);
-        dispatch("alert/error", error, { root: true });
+        commit("_2faFailure", error);
       }
     );
   },
@@ -39,10 +38,10 @@ const actions = {
     userService.logout();
     commit("logout");
   },
-  register({ dispatch, commit }, { username, password }) {
+  register({ dispatch, commit }, { username, password, eMail }) {
     commit("registerRequest", { username });
 
-    userService.register(username, password).then(
+    userService.register(username, password, eMail).then(
       user => {
         commit("registerSuccess", user);
         //router.push("/login");
@@ -57,7 +56,23 @@ const actions = {
       }
     );
   },
-  addSeminar({commit}, {user, seminar}) {
+  register2Fa({ dispatch, commit }, { clientSecrent }) {
+    userService.register2Fa(clientSecrent).then(
+      user => {
+        commit("add2faSucces", user);
+        //router.push("/login");
+        setTimeout(() => {
+          // display success message after route change completes
+          dispatch("alert/success", "Registration successful", { root: true });
+        });
+      },
+      error => {
+        commit("registerFailure", error);
+        dispatch("alert/error", error, { root: true });
+      }
+    );
+  },
+  addSeminar({ commit }, { user, seminar }) {
     user.seminars.push(seminar.id);
     localStorage.setItem("user", JSON.stringify(user));
     commit("addSeminar", user);
@@ -76,6 +91,14 @@ const mutations = {
   _2faSuccess(state, user) {
     state.status = { loggedIn: true };
     state.user = user;
+  },
+  _2faFailure(state, error) {
+    state.status = {
+      _2faNeeded: true,
+      _2faFailure: true,
+      error,
+      type: "alert-danger"
+    };
   },
   loginFailure(state) {
     state.status = {};
@@ -96,6 +119,10 @@ const mutations = {
     state.status = {};
   },
   addSeminar(state, user) {
+    state.user = user;
+  },
+  add2faSucces(state, user) {
+    state.status = { showTan: true };
     state.user = user;
   }
 };

@@ -40,6 +40,9 @@
       </div>
     </form>
     <b-modal hide-footer v-model="status._2faNeeded" title="2F Authentication">
+      <div v-if="status._2faFailure" :class="`alert ${status.type}`">
+        {{ status.error }}
+      </div>
       <form @submit.prevent="handle2Fa">
         <div class="form-group">
           <label for="_2fa">Your 2FA Password</label>
