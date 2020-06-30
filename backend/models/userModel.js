@@ -10,13 +10,17 @@ const Usermodel = new mongoose.Schema({
     type: String,
     required: true,
   },
-  currentOtp: {
+  mail: {
     type: String,
     required: true,
   },
+  currentOtp: {
+    type: String,
+    required: false,
+  },
   otpCount: {
     type: Number,
-    required: true,
+    required: false,
   },
   seminars: {
     type: Array,
@@ -24,7 +28,7 @@ const Usermodel = new mongoose.Schema({
   },
   secret: {
     type: String,
-    required: true,
+    required: false,
   },
   isAdmin: {
     type: Boolean,
