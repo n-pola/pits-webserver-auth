@@ -10,32 +10,37 @@ const Usermodel = new mongoose.Schema({
     type: String,
     required: true,
   },
-  currentOtp: {
-    type: Number,
+  mail: {
+    type: String,
     required: true,
+  },
+  currentOtp: {
+    type: String,
+    required: false,
   },
   otpCount: {
     type: Number,
-    required: true,
+    required: false,
   },
   seminars: {
     type: Array,
     required: true,
   },
+  secret: {
+    type: String,
+    required: false,
+  },
   isAdmin: {
     type: Boolean,
     required: true,
   },
-  secret: {
-    type: String,
-    required: true,
-  },
 });
 
-Usermodel.methods.generateAuthToken = function () {
+Usermodel.methods.generateAuthToken = function (authedTOTP) {
   const token = jwt.sign(
-    // eslint-disable-next-line no-underscore-dangle
-    { _id: this._id, name: this.userName, isAdmin: this.isAdmin },
+    {
+      _id: this._id, name: this.userName, isAdmin: this.isAdmin, authedTOTP,
+    },
     process.env.JWT_SECRET_KEY,
     { expiresIn: '2d' },
   );

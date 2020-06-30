@@ -11,18 +11,24 @@ module.exports = function (req, res, next) {
     const bearerToken = bearer[1];
     token = bearerToken;
   } else {
-    res.sendStatus(401);
+    return res.sendStatus(401);
   }
   // if no token found, return response (without going to the next middelware)
   if (!token) return res.status(401).send('Access denied. No token provided.');
 
+  const no2FA = ['/login/2fa', '/register/2fa'];
   try {
     // if can verify the token, set req.user and pass to next middleware
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    console.log(req.originalUrl);
+    if (!decoded.authedTOTP && !no2FA.includes(req.originalUrl)) {
+      throw new Error('No 2FA!');
+    }
     req.user = decoded;
     next();
   } catch (ex) {
     // if invalid token
-    res.status(401).send('Invalid token.');
+    console.log(ex.message);
+    res.status(401).send({ message: ex.message });
   }
 };
